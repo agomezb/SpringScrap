@@ -47,13 +47,12 @@ internal class Program
             .AddEnvironmentVariables(prefix: "SPRING_SCRAP_");
         var defaultConfiguration = configurationBuilder.Build();
         var environmentSprintUri = defaultConfiguration["URI"];
-        Console.WriteLine("environmentSprintUri");
-        Console.WriteLine(environmentSprintUri);
     if (string.IsNullOrEmpty(defaultConfiguration["spring:cloud:config:uri"]) && 
             string.IsNullOrEmpty(environmentSprintUri))
         {
             Console.WriteLine("Spring Cloud URI is missing, set it using the SPRING_SCRAP_URI environment variable.");
-            Console.WriteLine("Example: export SPRING_SCRAP_URI=\"http://spring:5000\"");
+            Console.WriteLine("windows: set SPRING_SCRAP_URI=http://spring:8080");
+            Console.WriteLine("unix: export SPRING_SCRAP_URI=http://spring:8080");
             return;
         }
 
