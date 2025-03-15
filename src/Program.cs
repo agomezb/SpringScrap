@@ -73,6 +73,9 @@ internal class Program
         RemoveProperty(configurationJson, "Spring");
         using var streamWriter = new StreamWriter(Path.Combine(outputFileName), true);
         streamWriter.WriteLine(configurationJson);
+        Console.WriteLine(new string('=', 50));
+        Console.WriteLine($"Configuration saved to {outputFileName}.");
+        Console.WriteLine(new string('=', 50));
     }
     
     private static void RemoveProperty(JToken jsonObject, string name)
