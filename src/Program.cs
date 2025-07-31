@@ -33,14 +33,27 @@ internal class Program
         };
         outputOption.AddAlias("-o");
         
+        var springUriOption = new Option<string>("--spring-uri", getDefaultValue: () => "")
+        {
+            Description = "URI of the spring cloud service. If not provided, it will use the SPRING_SCRAP_URI environment variable."
+        };
+        springUriOption.AddAlias("-u");
+        
         command.Add(serviceOption);
         command.Add(environmentOption);
         command.Add(outputOption);
-        command.SetHandler(GetConfigurationFile, serviceOption, environmentOption, outputOption);
+        command.Add(springUriOption);
+        command.SetHandler(
+            GetConfigurationFile, 
+            serviceOption, 
+            environmentOption, 
+            outputOption,
+            springUriOption);
         await command.InvokeAsync(args);
     }
 
-    private static void GetConfigurationFile(string service, string environment, string outputFileName)
+    private static void GetConfigurationFile(
+        string service, string environment, string outputFileName, string springUri)
     {
         var configurationBuilder = new ConfigurationBuilder()
             .AddJsonFile("appsettings.json", false, true)
@@ -48,11 +61,14 @@ internal class Program
         var defaultConfiguration = configurationBuilder.Build();
         var environmentSprintUri = defaultConfiguration["URI"];
     if (string.IsNullOrEmpty(defaultConfiguration["spring:cloud:config:uri"]) && 
+            string.IsNullOrEmpty(springUri) &&
             string.IsNullOrEmpty(environmentSprintUri))
         {
-            Console.WriteLine("Spring Cloud URI is missing, set it using the SPRING_SCRAP_URI environment variable.");
-            Console.WriteLine("windows: set SPRING_SCRAP_URI=http://spring:8080");
-            Console.WriteLine("unix: export SPRING_SCRAP_URI=http://spring:8080");
+            Console.WriteLine("Spring Cloud URI is missing, please provide it using the --spring-uri option (-u) or set the SPRING_SCRAP_URI environment variable.");
+            Console.WriteLine("In order to set the SPRING_SCRAP_URI environment variable, you can use the following commands:");
+            Console.WriteLine("Windows PoweShell: $env:SPRING_SCRAP_URI=http://spring:8080");
+            Console.WriteLine("Windows CMD: set SPRING_SCRAP_URI=http://spring:8080");
+            Console.WriteLine("UNIX: export SPRING_SCRAP_URI=http://spring:8080");
             return;
         }
 
@@ -61,9 +77,12 @@ internal class Program
             new("spring:application:name", service),
             new("spring:cloud:config:env", environment)
         };
-        if (!string.IsNullOrEmpty(environmentSprintUri))
+        var configServerUri = string.IsNullOrEmpty(springUri)
+            ? environmentSprintUri
+            : springUri;
+        if (!string.IsNullOrEmpty(configServerUri))
         {
-            customConfigs.Add(new KeyValuePair<string, string?>("spring:cloud:config:uri", environmentSprintUri));
+            customConfigs.Add(new KeyValuePair<string, string?>("spring:cloud:config:uri", configServerUri));
         }
 
         configurationBuilder.AddInMemoryCollection(customConfigs).AddConfigServer();
